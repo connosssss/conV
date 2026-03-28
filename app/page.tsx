@@ -29,6 +29,12 @@ class PlaybackProcessor extends AudioWorkletProcessor {
   }
 
   handleMessage(e) {
+    if (e.data && e.data.command === "clear") {
+      this.bufferQueue = [];
+      this.currentBuffer = null;
+      this.currentPtr = 0;
+      return;
+    }
     this.bufferQueue.push(e.data);
   }
 
@@ -126,6 +132,7 @@ function float32ToBase64Pcm(float32: Float32Array): string {
 export default function Home() {
 
   const [running, setRunning] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [status, setStatus] = useState("");
   const [transcript, setTranscript] = useState<{ role: "user" | "model"; text: string }[]>([]);
 
@@ -220,6 +227,8 @@ export default function Home() {
   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###########################################################################################################!!!!!!!!!!!!
 
   const start = useCallback(async () => {
+    if (isConnecting || running) return;
+    setIsConnecting(true);
     setTranscript([]);
     setStatus("fetching api key");
 
@@ -230,6 +239,7 @@ export default function Home() {
     if (!apiKey) {
 
       setStatus("no api key");
+      setIsConnecting(false);
       return;
     }
     // GET GENERATED INSTRUCTIONS
@@ -354,6 +364,9 @@ export default function Home() {
 
       if (!sc) return;
 
+      if (sc.interrupted) {
+        playbackNodeRef.current?.port.postMessage({ command: "clear" });
+      }
 
       // Plays models audio
       for (const part of sc.modelTurn?.parts ?? []) {
@@ -364,13 +377,14 @@ export default function Home() {
       if (sc.inputTranscription?.text) appendTranscript("user", sc.inputTranscription.text);
     };
 
-    ws.onerror = () => setStatus("WebSocket error");
-    ws.onclose = () => { setStatus("Disconnected"); setRunning(false); };
+    ws.onerror = () => { setStatus("WebSocket error"); setIsConnecting(false); };
+    ws.onclose = () => { setStatus("Disconnected"); setRunning(false); setIsConnecting(false); };
 
     setRunning(true);
+    setIsConnecting(false);
 
 
-  }, [playAudioChunk, startMic, appendTranscript, language, inputScenario, additionalInstructions]);
+  }, [playAudioChunk, startMic, appendTranscript, language, inputScenario, additionalInstructions, isConnecting, running]);
 
   const stop = useCallback(() => {
     wsRef.current?.close();
@@ -476,9 +490,10 @@ export default function Home() {
 
             <button
               onClick={start}
-              className="bg-[#D9D9D9]/85 hover:bg-[#D9D9D9] transition-all duration-200 py-1 px-3 rounded-md w-1/4 active:scale-95"
+              disabled={isConnecting}
+              className="bg-[#D9D9D9]/85 hover:bg-[#D9D9D9] transition-all duration-200 py-1 px-3 rounded-md w-1/4 active:scale-95 disabled:opacity-50"
             >
-              Start
+              {isConnecting ? "Connecting..." : "Start"}
             </button>
           </motion.div>
         ) : (
