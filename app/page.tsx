@@ -163,7 +163,7 @@ export default function Home() {
             </h1>
             <div className="flex items-center gap-2 mb-10 z-20 flex-shrink-0">
               <h3 className="text-xl font-semibold tracking-wide text-white/70">
-                real-time, personalized, language learning conversation
+                real-time, personalized, language learning conversations
               </h3>
               <button
                 onClick={() => setShowAppInfoPopup(true)}
