@@ -204,7 +204,7 @@ export default function Home() {
     };
 
 
-    
+
     ws.onmessage = async (event) => {
       const text = event.data instanceof Blob ? await event.data.text() : event.data;
       const msg = JSON.parse(text);
@@ -259,9 +259,11 @@ export default function Home() {
       <hr />
       <div>
         {transcript.map((entry, i) => (
-          <p key={i}>
-            <div>{entry.role === "user" ? "You" : "Gemini"}:</div> {entry.text}
-          </p>
+          <div key={i}>
+            <div>{entry.role === "user" ? "You" : "Gemini"}:</div>
+            
+             <div>{entry.text}</div>
+          </div>
         ))}
       </div>
     </div>
