@@ -423,7 +423,7 @@ export default function Home() {
                   console.log("LANGUAGE: " + val);
                 }}
                 disabled={running}
-                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center"
+                className="bg-[#D9D9D9]/90 w-3/8 h-8 rounded-md px-3 text-center"
                 placeholder="Spanish"
               />
             </div>
@@ -438,7 +438,7 @@ export default function Home() {
                   setInputScenario(val);
                   console.log("INPUT SCENARIO: " + val);
                 }}
-                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center"
+                className="bg-[#D9D9D9]/85 w-3/8 h-8 rounded-md px-3 text-center"
                 placeholder="Ordering a coffee at a cafe"
               />
             </div>
@@ -453,14 +453,14 @@ export default function Home() {
                   setAdditionalInstructions(val);
                   console.log("ADDITIONAL INSTRUCTIONS: " + val);
                 }}
-                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center"
+                className="bg-[#D9D9D9]/85 w-3/8 h-8 rounded-md px-3 text-center"
                 placeholder="Correct my Spanish grammar in English"
               />
             </div>
 
             <button
               onClick={start}
-              className="bg-[#D9D9D9] hover:bg-[#A3A3A3] transition-all duration-200 py-1 px-3 rounded-md w-1/4 active:scale-95"
+              className="bg-[#D9D9D9]/85 hover:bg-[#D9D9D9] transition-all duration-200 py-1 px-3 rounded-md w-1/4 active:scale-95"
             >
               Start
             </button>
@@ -487,8 +487,8 @@ export default function Home() {
                 >
 
                   <div className={`max-w-[85%] p-5 rounded-3xl backdrop-blur-md shadow-lg ${entry.role === "user"
-                      ? "bg-white/20 text-white rounded-br-sm border border-white/20"
-                      : "bg-black/20 text-white/90 rounded-bl-sm border border-black/10"
+                    ? "bg-[#D9D9D9]/50 text-white rounded-br-sm border border-white/20"
+                    : "bg-black/50 text-white/90 rounded-bl-sm border border-black/10"
                     }`}>
 
                     <p className="text-xs uppercase tracking-widest opacity-60 mb-2 font-medium">
@@ -502,6 +502,8 @@ export default function Home() {
               <div ref={endOfMessagesRef} />
             </div>
 
+
+
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -510,13 +512,13 @@ export default function Home() {
             >
 
               <div className="flex items-center gap-3 bg-black/30 backdrop-blur-xl py-2 px-6 rounded-md border border-white/10 shadow-2xl">
-                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${!running ? "bg-gray-400" : canSpeak ? "bg-green-400 shadow-[0_0_12px_rgba(74,222,128,0.6)]" : "bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.6)]"}`}></div>
+                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${!running ? "bg-gray-400" : canSpeak ? "bg-[#4bd472]" : "bg-[#cf4d4d]"}`}></div>
                 <p className="text-white/80 text-sm tracking-wide font-medium">{canSpeak ? "Listening..." : "Speaking..."}</p>
               </div>
 
               <button
                 onClick={stop}
-                className="bg-red-500/80 hover:bg-red-500 text-white transition-all py-2 px-8 rounded-md tracking-wider shadow-md active:scale-95"
+                className="bg-[#9e4242] hover:bg-[#c15f5f] text-white transition-all py-2 px-8 rounded-md tracking-wider shadow-md active:scale-95"
               >
 
                 End Session
