@@ -90,6 +90,10 @@ function float32ToBase64Pcm(float32: Float32Array): string {
 }
 
 
+
+
+
+
 export default function Home() {
 
   const [running, setRunning] = useState(false);
@@ -107,6 +111,11 @@ export default function Home() {
   
   const canSpeakRef = useRef(false);
   const playbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+
+  const [inputScenario, setInputScenario] = useState("");
+  
+
 
   const appendTranscript = useCallback((role: "user" | "model", text: string) => {
 
@@ -243,7 +252,11 @@ export default function Home() {
             model: `models/${MODEL}`,
 
             systemInstruction: {
-              parts: [{ text: `The user input will be in ${langNames[language]}, try to respond in that as well (if it says Any, then ignore this part).` }]
+              parts: [{ text: `The user input will be in ${langNames[language]}, try to respond in that as well (if it says Any, then ignore this part).
+              Your main task will to be have a conversation in the language if specified and you want to follow this specific scenario: ${inputScenario}.
+              You will follow this scenario as if you are a person in it. An example being if it says something like ordering coffee, you will be a barista taking the order.
+              
+              ` }]
             },
 
             generationConfig: { 
@@ -332,6 +345,8 @@ export default function Home() {
           <option value="zh-CN">Chinese</option>
 
         </select>
+
+        <input type="text" value={inputScenario} onChange={(e) => setInputScenario(e.target.value)}></input>
         
         <div 
           className={`w-4 h-4   ${
