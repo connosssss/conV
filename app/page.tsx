@@ -206,7 +206,7 @@ export default function Home() {
     let generatedLangCode = "en-US";
 
     try {
-      
+      console.log("LANGUAGE: " + language + " INPUT SCENARIO: " + inputScenario)
       const gRes = await fetch("/api/generate-instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -334,7 +334,7 @@ export default function Home() {
     setRunning(true);
 
 
-  }, [playAudioChunk, startMic, appendTranscript, language]);
+  }, [playAudioChunk, startMic, appendTranscript, language, inputScenario]);
 
   const stop = useCallback(() => {
     wsRef.current?.close();
@@ -365,13 +365,21 @@ export default function Home() {
           type="text"
           id="language-input"
           value={language}
-          onChange={(e) => setLanguage(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setLanguage(val);
+            console.log("LANGUAGE: " + val);
+          }}
           disabled={running}
           className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center"
           placeholder="Language (e.g. English)"
         />
 
-        <input type="text" value={inputScenario} onChange={(e) => setInputScenario(e.target.value)}
+        <input type="text" value={inputScenario} onChange={(e) => {
+          const val = e.target.value;
+          setInputScenario(val);
+          console.log("INPUT SCENARIO: " + val);
+        }}
         className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Imagine you're in a coffee shop..."></input>
         
         <div 
