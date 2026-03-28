@@ -192,10 +192,39 @@ export default function Home() {
     const { apiKey } = await res.json();
 
 
-    if (!apiKey) { 
+    if (!apiKey) {
 
-      setStatus("no api key"); 
-      return; 
+      setStatus("no api key");
+      return;
+    }
+    // GET GENERATED INSTRUCTIONS
+    setStatus("Generating system instructions...");
+    //default
+    let generatedInstruction = `The user input will be in ${language || "any language"}, try to respond in that as well.
+     Your main task will to be have a conversation in the language if specified and you want to follow this specific scenario: ${inputScenario}. 
+    You will follow this scenario as if you are a person in it.`;
+    let generatedLangCode = "en-US";
+
+    try {
+      
+      const gRes = await fetch("/api/generate-instructions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language, scenario: inputScenario }),
+      });
+
+      
+      const parsed = await gRes.json();
+      if (parsed.systemInstruction) {
+        generatedInstruction = parsed.systemInstruction;
+        console.log(generatedInstruction)
+    }
+      if (parsed.languageCode) generatedLangCode = parsed.languageCode;
+
+    } 
+    
+    catch (err) {
+      console.error("Error generating system instruction:", err);
     }
 
     const audioCtx = new AudioContext({ sampleRate: 24000 });
@@ -239,30 +268,19 @@ export default function Home() {
     ws.onopen = () => {
       setStatus("Connected. Sending config...");
 
-      const langNames: Record<string, string> = {
-        "Any": "Any", 
-        "en-US": "English",
-        "es-ES": "Spanish",
-        "zh-CN": "Chinese"
-      };
-
       ws.send(
         JSON.stringify({
           setup: {
             model: `models/${MODEL}`,
 
             systemInstruction: {
-              parts: [{ text: `The user input will be in ${langNames[language]}, try to respond in that as well (if it says Any, then ignore this part).
-              Your main task will to be have a conversation in the language if specified and you want to follow this specific scenario: ${inputScenario}.
-              You will follow this scenario as if you are a person in it. An example being if it says something like ordering coffee, you will be a barista taking the order.
-              
-              ` }]
+              parts: [{ text: generatedInstruction }]
             },
 
-            generationConfig: { 
+            generationConfig: {
               responseModalities: ["AUDIO"],
               speechConfig: {
-                languageCode: language
+                languageCode: generatedLangCode
               }
             },
 
@@ -286,10 +304,10 @@ export default function Home() {
 
         ws.send(
           JSON.stringify({
-           realtimeInput: {
-            text: "Please begin the scenario.",
-          },
-        })
+            realtimeInput: {
+              text: "Please begin the scenario.",
+            },
+          })
         );
 
         startMic(ws);
@@ -343,20 +361,15 @@ export default function Home() {
 
       <div className="w-full flex h-full flex-col items-center gap-3 mt-20">
 
-        <select 
-          id="language-select" 
-          value={language} 
+        <input
+          type="text"
+          id="language-input"
+          value={language}
           onChange={(e) => setLanguage(e.target.value)}
           disabled={running}
-          className="bg-[#f5e4e4]"
-        >
-
-          <option value="Any">Any</option>
-          <option value="en-US">English</option>
-          <option value="es-ES">Spanish</option>
-          <option value="zh-CN">Chinese</option>
-
-        </select>
+          className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center"
+          placeholder="Language (e.g. English)"
+        />
 
         <input type="text" value={inputScenario} onChange={(e) => setInputScenario(e.target.value)}
         className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Imagine you're in a coffee shop..."></input>
@@ -380,7 +393,7 @@ export default function Home() {
       
       <p>{status}</p>
       
-      <div>
+      <div className="text-white">
         {transcript.map((entry, i) => (
           <div key={i}>
             <div>{entry.role === "user" ? "You" : "Gemini"}:</div>
