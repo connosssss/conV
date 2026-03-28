@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
             Return JSON with exactly four keys: "report" (string), "score" (a string, like "85/100"), "workOn" (an array of strings), "doneWell" (an array of strings).
             Lastly, do not deduct points if the user doesnt respond to the last message the ai sends and do not consider how much it follows the scenario either, this includes
-            anything that has to do with answering all pending questions.
+            anything that has to do with answering all pending questions. If the user didnt give any input, put an empty string as the report string and "no conversation to grade" as the score string.
             
             Conversation Transcript:
             ${transcriptText}`

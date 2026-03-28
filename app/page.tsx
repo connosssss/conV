@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 export default function Home() {
   const [language, setLanguage] = useState("");
   const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [showAppInfoPopup, setShowAppInfoPopup] = useState(false);
   const [inputScenario, setInputScenario] = useState("");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
   const [showSummary, setShowSummary] = useState(false);
@@ -145,7 +146,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-gradient-to-b from-[#873A3A] to-[#6B2323] overflow-hidden overflow-y-hidden h-screen w-full flex flex-col items-center relative rounded-md font-sans text-black/70">
+    <div className="bg-gradient-to-b from-[#873A3A] to-[#732727] overflow-hidden overflow-y-hidden h-screen w-full flex flex-col items-center relative rounded-md font-sans text-black/70">
       <AnimatePresence mode="wait">
         {!running && !showSummary ? (
           <motion.div
@@ -156,38 +157,75 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="w-full flex h-full flex-col items-center gap-8 mt-20 z-10"
           >
-            <h1 className="text-5xl font-semibold tracking-[0.5rem] text-white/80 z-20 flex-shrink-0 mb-2">
+            <div className="w-full flex flex-col items-center gap-2">
+            <h1 className="text-5xl font-semibold tracking-[0.5rem] text-white/80 z-20 flex-shrink-0  ">
               chiika
             </h1>
+            <div className="flex items-center gap-2 mb-10 z-20 flex-shrink-0">
+              <h3 className="text-xl font-semibold tracking-wide text-white/70">
+                real-time, personalized, language learning conversation
+              </h3>
+              <button
+                onClick={() => setShowAppInfoPopup(true)}
+                className="text-white/70 hover:text-white transition-colors cursor-pointer"
+                aria-label="App information"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </button>
+            </div>
+            </div>
             <div className="w-full flex flex-col items-center gap-1">
-              <label className="text-white/80 text-lg tracking-wide">language</label>
-              <input
-                type="text"
+              <label className="text-white/80 text-lg tracking-wide">target language</label>
+              <textarea
                 id="language-input"
                 value={language}
                 onChange={(e) => {
                   const val = e.target.value;
                   setLanguage(val);
                   console.log("LANGUAGE: " + val);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isConnecting) handleStart();
+                  }
                 }}
                 disabled={running}
-                className="bg-[#D9D9D9]/90 w-3/8 h-8 rounded-md px-3 text-center"
+                className="bg-[#D9D9D9]/90 w-3/8 min-h-[32px] rounded-md px-3 py-1 text-center resize-none focus:outline-none overflow-hidden block"
                 placeholder="Spanish"
+                rows={1}
+                style={{ height: "32px" }}
               />
             </div>
 
             <div className="w-full flex flex-col items-center gap-1">
-              <label className="text-white/80 text-lg tracking-wide">scenario</label>
-              <input
-                type="text"
+              <label className="text-white/80 text-lg tracking-wide">conversation scenario</label>
+              <textarea
                 value={inputScenario}
                 onChange={(e) => {
                   const val = e.target.value;
                   setInputScenario(val);
                   console.log("INPUT SCENARIO: " + val);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
-                className="bg-[#D9D9D9]/85 w-3/8 h-8 rounded-md px-3 text-center"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isConnecting) handleStart();
+                  }
+                }}
+                disabled={running}
+                className="bg-[#D9D9D9]/85 w-3/8 min-h-[32px] rounded-md px-3 py-1 text-center resize-none focus:outline-none overflow-hidden block"
                 placeholder="Ordering a coffee at a cafe"
+                rows={1}
+                style={{ height: "32px" }}
               />
             </div>
 
@@ -199,23 +237,34 @@ export default function Home() {
                   className="text-white/80 hover:text-white transition-colors cursor-pointer"
                   aria-label="More information"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className="text-white/70">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="16" x2="12" y2="12"></line>
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                   </svg>
                 </button>
               </div>
-              <input
-                type="text"
+              <textarea
                 value={additionalInstructions}
                 onChange={(e) => {
                   const val = e.target.value;
                   setAdditionalInstructions(val);
                   console.log("ADDITIONAL INSTRUCTIONS: " + val);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
-                className="bg-[#D9D9D9]/85 w-3/8 h-8 rounded-md px-3 text-center"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isConnecting) handleStart();
+                  }
+                }}
+                disabled={running}
+                className="bg-[#D9D9D9]/85 w-3/8 min-h-[32px] rounded-md px-3 py-1 text-center resize-none focus:outline-none overflow-hidden block"
                 placeholder="Correct my Spanish grammar in English"
+                rows={1}
+                style={{ height: "32px" }}
               />
             </div>
 
@@ -399,10 +448,60 @@ export default function Home() {
                 </svg>
               </button>
               <h3 className="text-xl font-semibold mb-3 text-black/80 tracking-wide text-center">Additional Instructions</h3>
-              <p className="text-black/70 leading-relaxed text-sm text-center">
-                Here you can add anything that you want to be in the conversation. For example you can do things like ask it to give you a rating when you request it,
-                fix your grammar when you mess up, or give translations after each statement; there is really no limit, so don't be afraid to specify anything!
-              </p>
+              <div className="text-black/70 leading-relaxed text-sm flex flex-col gap-3 w-full">
+                <p className="text-center">
+                  Here you can add anything that you want to be in the conversation. For example you can do things like:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 mx-auto text-left w-3/4">
+                  <li>ask it to give you a rating when you request it</li>
+                  <li>fix your grammar when you mess up</li>
+                  <li>give translations after each statement</li>
+                </ul>
+                <p className="text-center mt-1">
+                  there is really no limit, so don't be afraid to specify anything!
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showAppInfoPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setShowAppInfoPopup(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ delay: 0.1, duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#D9D9D9] p-6 rounded-lg max-w-sm w-full shadow-2xl relative cursor-default"
+            >
+              <button
+                onClick={() => setShowAppInfoPopup(false)}
+                className="absolute top-3 right-3 text-black/50 hover:text-black transition-colors"
+                aria-label="Close popup"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <h3 className="text-xl font-semibold mb-3 text-black/80 tracking-wide text-center">About Chiika</h3>
+              <div className="text-black/70 leading-relaxed text-sm flex flex-col gap-3 w-full text-center">
+                <p>
+                  Chiika is an interactive platform built to help you learn languages through immersive conversation.
+                </p>
+                <p>
+                  Simply provide a scenario, a language, and any extra instructions, and you'll jump straight into a live audio chat with an AI designed to naturally converse and help you improve!
+                </p>
+              </div>
             </motion.div>
           </motion.div>
         )}
