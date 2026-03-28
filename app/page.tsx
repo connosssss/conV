@@ -499,7 +499,7 @@ export default function Home() {
                   Chiika is an interactive platform built to help you learn languages through immersive conversation.
                 </p>
                 <p>
-                  Simply provide a scenario, a language, and any extra instructions, and you'll jump straight into a live audio chat with an AI designed to naturally converse and help you improve!
+                  Chiika takes your input to create a custom conversation based on the language, a real world conversation scenario, and any added instructions you would like to add to better fit your needs. Then, you can have a real conversation with AI and get feedback in real time!
                 </p>
               </div>
             </motion.div>
