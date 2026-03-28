@@ -338,14 +338,17 @@ export default function Home() {
 
 
   return (
-    <div>
-      <div>
+    <div className="bg-gradient-to-b from-[#873A3A] to-[#6B2323] h-screen w-full text-black/70 rounded-md">
+
+
+      <div className="w-full flex h-full flex-col items-center gap-3 mt-20">
 
         <select 
           id="language-select" 
           value={language} 
           onChange={(e) => setLanguage(e.target.value)}
           disabled={running}
+          className="bg-[#f5e4e4]"
         >
 
           <option value="Any">Any</option>
@@ -355,7 +358,8 @@ export default function Home() {
 
         </select>
 
-        <input type="text" value={inputScenario} onChange={(e) => setInputScenario(e.target.value)}></input>
+        <input type="text" value={inputScenario} onChange={(e) => setInputScenario(e.target.value)}
+        className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Imagine you're in a coffee shop..."></input>
         
         <div 
           className={`w-4 h-4   ${
@@ -363,11 +367,19 @@ export default function Home() {
           }`}
         ></div>
 
+
+        <button onClick={running ? stop : start}
+        className="bg-[#f5e4e4] hover:bg-[#f5e4e4]/80 transition-all duration-200 py-1 px-3 rounded-md">{running ? "Stop" : "Start"}</button>
+
       </div>
 
-      <button onClick={running ? stop : start}>{running ? "Stop" : "Start"}</button>
+
+
+    <hr />
+
+      
       <p>{status}</p>
-      <hr />
+      
       <div>
         {transcript.map((entry, i) => (
           <div key={i}>
