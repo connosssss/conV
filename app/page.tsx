@@ -21,32 +21,87 @@ const PLAYBACK_PROCESSOR_CODE = `
 class PlaybackProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this._buffer = [];
-    this._isPlaying = false;
-    this.port.onmessage = (e) => {
-      const samples = e.data;
-      for (let i = 0; i < samples.length; i++) {
-        this._buffer.push(samples[i]);
-      }
-    };
+    this.port.onmessage = this.handleMessage.bind(this);
+    this.bufferQueue = [];
+    this.currentBuffer = null;
+    this.currentPtr = 0;
+    this.isPlaying = false;
+    this.isBuffering = true;
+  }
+
+  handleMessage(e) {
+    this.bufferQueue.push(e.data);
+  }
+
+  getTotalBuffered() {
+    let total = 0;
+    if (this.currentBuffer) {
+      total += this.currentBuffer.length - this.currentPtr;
+    }
+    for (const buf of this.bufferQueue) {
+      total += buf.length;
+    }
+    return total;
   }
 
   process(inputs, outputs) {
     const output = outputs[0][0];
-    for (let i = 0; i < output.length; i++) {
-      output[i] = this._buffer.length > 0 ? this._buffer.shift() : 0;
-    }
     
-    if (this._buffer.length > 0 && !this._isPlaying) {
-      this._isPlaying = true;
-      this.port.postMessage({ playing: true });
-    } 
-      
-    else if (this._buffer.length === 0 && this._isPlaying) {
-      this._isPlaying = false;
-      this.port.postMessage({ playing: false });
-    }
+    const totalBuffered = this.getTotalBuffered();
     
+    if (this.isBuffering) {
+      if (totalBuffered >= 2400) {
+        this.isBuffering = false;
+      } else {
+        // Output silence while buffering
+        for (let i = 0; i < output.length; i++) {
+          output[i] = 0;
+        }
+        return true;
+      }
+    }
+
+    let outPtr = 0;
+    while (outPtr < output.length) {
+      if (!this.currentBuffer) {
+        if (this.bufferQueue.length > 0) {
+          this.currentBuffer = this.bufferQueue.shift();
+          this.currentPtr = 0;
+        } else {
+          break;
+        }
+      }
+
+      const available = this.currentBuffer.length - this.currentPtr;
+      const needed = output.length - outPtr;
+
+      if (available >= needed) {
+        output.set(this.currentBuffer.subarray(this.currentPtr, this.currentPtr + needed), outPtr);
+        this.currentPtr += needed;
+        outPtr += needed;
+        if (this.currentPtr >= this.currentBuffer.length) {
+          this.currentBuffer = null;
+        }
+      } else {
+        output.set(this.currentBuffer.subarray(this.currentPtr), outPtr);
+        outPtr += available;
+        this.currentBuffer = null;
+      }
+    }
+
+    if (outPtr < output.length) {
+      for (let i = outPtr; i < output.length; i++) {
+        output[i] = 0;
+      }
+      this.isBuffering = true; // Wait for buffer to recover next time
+    }
+
+    const hasAudio = totalBuffered > 0;
+    if (hasAudio !== this.isPlaying) {
+      this.isPlaying = hasAudio;
+      this.port.postMessage({ playing: this.isPlaying });
+    }
+
     return true;
   }
 }
@@ -141,8 +196,8 @@ export default function Home() {
 
   //plays audio chunk
   const playAudioChunk = useCallback((base64: string) => {
-    playbackNodeRef.current?.port.postMessage(decodeAudioChunk(base64));
-
+    const float32Data = decodeAudioChunk(base64);
+    playbackNodeRef.current?.port.postMessage(float32Data, [float32Data.buffer]);
   }, []);
 
 
