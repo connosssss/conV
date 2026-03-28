@@ -313,7 +313,7 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full flex justify-center mt-4 mb-8"
                   >
-                    <div className="w-full p-6 rounded-3xl backdrop-blur-md shadow-lg bg-[#D9D9D9]/90 text-black border border-white/20 flex flex-col items-center gap-4">
+                    <div className="w-full p-6 rounded-md backdrop-blur-md shadow-lg bg-[#D9D9D9]/90 text-black border border-white/20 flex flex-col items-center gap-4">
                       {isLoadingSummary ? (
                         <p className="text-lg font-medium text-center">Generating conversation summary...</p>
                       ) : (
