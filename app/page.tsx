@@ -9,6 +9,9 @@ export default function Home() {
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [inputScenario, setInputScenario] = useState("");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryData, setSummaryData] = useState<{report: string; score: string; workOn?: string[]; doneWell?: string[]} | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
   const {
     running,
@@ -24,6 +27,41 @@ export default function Home() {
     additionalInstructions,
   });
 
+  const handleStart = () => {
+    setShowSummary(false);
+    setSummaryData(null);
+    start();
+  };
+
+  const handleEndSession = async () => {
+    stop();
+    if (transcript.length === 0) {
+      return;
+    }
+    
+    setShowSummary(true);
+    setIsLoadingSummary(true);
+
+    try {
+      const res = await fetch("/api/generate-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript }),
+      });
+      const data = await res.json();
+      setSummaryData(data);
+    } 
+    
+    catch (err) {
+      console.error("Failed to generate summary", err);
+      setSummaryData({ report: "Could not generate summary.", score: "Error" });
+    } 
+    
+    finally {
+      setIsLoadingSummary(false);
+    }
+  };
+
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -32,7 +70,7 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-b from-[#873A3A] to-[#6B2323] overflow-hidden overflow-y-hidden h-screen w-full flex flex-col items-center relative rounded-md font-sans text-black/70">
       <AnimatePresence mode="wait">
-        {!running ? (
+        {!running && !showSummary ? (
           <motion.div
             key="setup-ui"
             initial={{ opacity: 0, y: 20 }}
@@ -105,7 +143,7 @@ export default function Home() {
             </div>
 
             <button
-              onClick={start}
+              onClick={handleStart}
               disabled={isConnecting}
               className="bg-[#D9D9D9]/85 hover:bg-[#D9D9D9] transition-all duration-200 py-1 px-3 rounded-md w-1/4 active:scale-95 disabled:opacity-50"
             >
@@ -141,26 +179,97 @@ export default function Home() {
                   </div>
                 </motion.div>
               ))}
+              
+              <AnimatePresence>
+                {showSummary && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full flex justify-center mt-4 mb-8"
+                  >
+                    <div className="w-full p-6 rounded-3xl backdrop-blur-md shadow-lg bg-[#D9D9D9]/90 text-black border border-white/20 flex flex-col items-center gap-4">
+                      {isLoadingSummary ? (
+                        <p className="text-lg font-medium animate-pulse text-center">Generating conversation summary...</p>
+                      ) : (
+                        <>
+                          <h2 className="text-xl font-semibold tracking-wide text-[#6B2323]">conversation report</h2>
+                          <div className="text-3xl font-semibold text-[#873A3A] mb-2 tracking-tighter">{summaryData?.score}</div>
+                          <p className="text-lg text-center leading-relaxed ">{summaryData?.report}</p>
+
+
+
+                          {((summaryData?.workOn && summaryData.workOn.length > 0) || (summaryData?.doneWell && summaryData.doneWell.length > 0)) && (
+                            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 mb-2">
+                              {summaryData?.doneWell && summaryData.doneWell.length > 0 && (
+                                <div className="p-5 flex flex-col gap-3">
+                                  <h3 className="font-bold text-[#2e8a48] tracking-wider text-sm flex items-center gap-2">
+                                    done well!
+                                  </h3>
+                                  <ul className="list-disc pl-5 text-sm text-[#1b5e2f] space-y-1.5  border-l-2 border-[#1b5e2f]">
+                                    {summaryData.doneWell.map((item, idx) => (
+                                      <li key={idx} className="font-medium">{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              {summaryData?.workOn && summaryData.workOn.length > 0 && (
+                                <div className="b p-5 flex flex-col gap-3">
+                                  <h3 className="font-bold text-[#8a2424] tracking-wider text-sm flex items-center gap-2">
+                                    things to work on...
+                                  </h3>
+                                  <ul className="list-disc pl-5 text-sm text-[#731818] space-y-1.5 border-l-2 border-[#731818]">
+                                    {summaryData.workOn.map((item, idx) => (
+                                      <li key={idx} className="font-medium">{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+
+
+
+                          <button
+                            onClick={() => {
+                                setShowSummary(false);
+                            }}
+                            className="mt-4 px-8 py-3 bg-[#6B2323] text-white rounded-md shadow-md hover:bg-[#873A3A] transition font-bold tracking-wider"
+                          >
+                            Return to Menu
+
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div ref={endOfMessagesRef} />
             </div>
 
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="absolute bottom-6 left-0 w-full flex flex-col items-center gap-4"
-            >
-              <div className="flex items-center gap-3 bg-black/30 backdrop-blur-xl py-2 px-6 rounded-md border border-white/10 shadow-2xl">
-                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${!running ? "bg-gray-400" : canSpeak ? "bg-[#4bd472]" : "bg-[#cf4d4d]"}`}></div>
-                <p className="text-white/80 text-sm tracking-wide font-medium">{canSpeak ? "Listening..." : "Speaking..."}</p>
-              </div>
-              <button
-                onClick={stop}
-                className="bg-[#9e4242] hover:bg-[#c15f5f] text-white transition-all py-2 px-8 rounded-md tracking-wider shadow-md active:scale-95"
+            {(!showSummary) && (
+              <motion.div
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                className="absolute bottom-6 left-0 w-full flex flex-col items-center gap-4"
               >
-                End Session
-              </button>
-            </motion.div>
+                <div className="flex items-center gap-3 bg-black/30 backdrop-blur-xl py-2 px-6 rounded-md border border-white/10 shadow-2xl">
+                  <div className={`w-3 h-3 rounded-full transition-all duration-300 ${!running ? "bg-gray-400" : canSpeak ? "bg-[#4bd472]" : "bg-[#cf4d4d]"}`}></div>
+                  <p className="text-white/80 text-sm tracking-wide font-medium">{canSpeak ? "Listening..." : "Speaking..."}</p>
+                </div>
+                <button
+                  onClick={handleEndSession}
+                  className="bg-[#9e4242] hover:bg-[#c15f5f] text-white transition-all py-2 px-8 rounded-md tracking-wider shadow-md active:scale-95"
+                >
+                  End Session
+                </button>
+              </motion.div>
+            )}
+
           </motion.div>
         )}
       </AnimatePresence>
