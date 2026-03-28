@@ -26,42 +26,16 @@ class PlaybackProcessor extends AudioWorkletProcessor {
     this.currentBuffer = null;
     this.currentPtr = 0;
     this.isPlaying = false;
-    this.isBuffering = true;
   }
 
   handleMessage(e) {
     this.bufferQueue.push(e.data);
   }
 
-  getTotalBuffered() {
-    let total = 0;
-    if (this.currentBuffer) {
-      total += this.currentBuffer.length - this.currentPtr;
-    }
-    for (const buf of this.bufferQueue) {
-      total += buf.length;
-    }
-    return total;
-  }
-
   process(inputs, outputs) {
     const output = outputs[0][0];
-    
-    const totalBuffered = this.getTotalBuffered();
-    
-    if (this.isBuffering) {
-      if (totalBuffered >= 2400) {
-        this.isBuffering = false;
-      } else {
-        // Output silence while buffering
-        for (let i = 0; i < output.length; i++) {
-          output[i] = 0;
-        }
-        return true;
-      }
-    }
-
     let outPtr = 0;
+    
     while (outPtr < output.length) {
       if (!this.currentBuffer) {
         if (this.bufferQueue.length > 0) {
@@ -93,12 +67,11 @@ class PlaybackProcessor extends AudioWorkletProcessor {
       for (let i = outPtr; i < output.length; i++) {
         output[i] = 0;
       }
-      this.isBuffering = true; // Wait for buffer to recover next time
     }
 
-    const hasAudio = totalBuffered > 0;
-    if (hasAudio !== this.isPlaying) {
-      this.isPlaying = hasAudio;
+    const isActuallyPlaying = !!this.currentBuffer || this.bufferQueue.length > 0;
+    if (isActuallyPlaying !== this.isPlaying) {
+      this.isPlaying = isActuallyPlaying;
       this.port.postMessage({ playing: this.isPlaying });
     }
 
@@ -242,8 +215,8 @@ export default function Home() {
 
 
 
-// Program start
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###########################################################################################################!!!!!!!!!!!!
+  // Program start
+  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###########################################################################################################!!!!!!!!!!!!
 
   const start = useCallback(async () => {
     setTranscript([]);
@@ -274,16 +247,16 @@ export default function Home() {
         body: JSON.stringify({ language, scenario: inputScenario, extraInstructions: additionalInstructions }),
       });
 
-      
+
       const parsed = await gRes.json();
       if (parsed.systemInstruction) {
         generatedInstruction = parsed.systemInstruction;
         console.log(generatedInstruction)
-    }
+      }
       if (parsed.languageCode) generatedLangCode = parsed.languageCode;
 
-    } 
-    
+    }
+
     catch (err) {
       console.error("Error generating system instruction:", err);
       setStatus("Error generating instructions. Using defaults.");
@@ -419,7 +392,7 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-[#873A3A] to-[#6B2323] overflow-hidden overflow-y-hidden h-screen w-full flex flex-col items-center relative rounded-md font-sans text-black/70">
-      <motion.h1 
+      <motion.h1
         initial={{ y: 0, scale: 1 }}
         animate={{ y: running ? -30 : 0, scale: running ? 0.7 : 1, opacity: running ? 0.7 : 1 }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
@@ -430,7 +403,7 @@ export default function Home() {
 
       <AnimatePresence mode="wait">
         {!running ? (
-          <motion.div 
+          <motion.div
             key="setup-ui"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -457,35 +430,35 @@ export default function Home() {
 
             <div className="w-full flex flex-col items-center gap-1">
               <label className="text-white/80 text-lg tracking-wide">scenario</label>
-              <input 
-                type="text" 
-                value={inputScenario} 
+              <input
+                type="text"
+                value={inputScenario}
                 onChange={(e) => {
                   const val = e.target.value;
                   setInputScenario(val);
                   console.log("INPUT SCENARIO: " + val);
                 }}
-                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center" 
+                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center"
                 placeholder="Ordering a coffee at a cafe"
               />
             </div>
-            
+
             <div className="w-full flex flex-col items-center gap-1">
               <label className="text-white/80 text-lg tracking-wide"> additional instructions (optional)</label>
-              <input 
-                type="text" 
-                value={additionalInstructions} 
+              <input
+                type="text"
+                value={additionalInstructions}
                 onChange={(e) => {
                   const val = e.target.value;
                   setAdditionalInstructions(val);
                   console.log("ADDITIONAL INSTRUCTIONS: " + val);
                 }}
-                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center" 
+                className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center"
                 placeholder="Correct my Spanish grammar in English"
               />
             </div>
 
-            <button 
+            <button
               onClick={start}
               className="bg-[#D9D9D9] hover:bg-[#A3A3A3] transition-all duration-200 py-1 px-3 rounded-md w-1/4 active:scale-95"
             >
@@ -494,7 +467,7 @@ export default function Home() {
           </motion.div>
         ) : (
 
-          <motion.div 
+          <motion.div
             key="active-ui"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -502,10 +475,10 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="w-full max-w-4xl flex-1 flex flex-col relative z-10 px-4 min-h-0"
           >
-            
+
             <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-32 pt-4 flex flex-col gap-6 scroll-smooth pr-2">
               {transcript.map((entry, i) => (
-                <motion.div 
+                <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -513,11 +486,10 @@ export default function Home() {
                   className={`flex w-full ${entry.role === "user" ? "justify-end" : "justify-start"}`}
                 >
 
-                  <div className={`max-w-[85%] p-5 rounded-3xl backdrop-blur-md shadow-lg ${
-                    entry.role === "user" 
-                      ? "bg-white/20 text-white rounded-br-sm border border-white/20" 
+                  <div className={`max-w-[85%] p-5 rounded-3xl backdrop-blur-md shadow-lg ${entry.role === "user"
+                      ? "bg-white/20 text-white rounded-br-sm border border-white/20"
                       : "bg-black/20 text-white/90 rounded-bl-sm border border-black/10"
-                  }`}>
+                    }`}>
 
                     <p className="text-xs uppercase tracking-widest opacity-60 mb-2 font-medium">
                       {entry.role === "user" ? "You" : "AI"}
@@ -530,7 +502,7 @@ export default function Home() {
               <div ref={endOfMessagesRef} />
             </div>
 
-            <motion.div 
+            <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.6 }}
@@ -539,11 +511,11 @@ export default function Home() {
 
               <div className="flex items-center gap-3 bg-black/30 backdrop-blur-xl py-2 px-6 rounded-md border border-white/10 shadow-2xl">
                 <div className={`w-3 h-3 rounded-full transition-all duration-300 ${!running ? "bg-gray-400" : canSpeak ? "bg-green-400 shadow-[0_0_12px_rgba(74,222,128,0.6)]" : "bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.6)]"}`}></div>
-                <p className="text-white/80 text-sm tracking-wide font-medium">{canSpeak? "Listening..." : "Speaking..."}</p>
+                <p className="text-white/80 text-sm tracking-wide font-medium">{canSpeak ? "Listening..." : "Speaking..."}</p>
               </div>
 
-              <button 
-                onClick={stop} 
+              <button
+                onClick={stop}
                 className="bg-red-500/80 hover:bg-red-500 text-white transition-all py-2 px-8 rounded-md tracking-wider shadow-md active:scale-95"
               >
 
@@ -560,7 +532,7 @@ export default function Home() {
 
       <AnimatePresence>
         {running && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
