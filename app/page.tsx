@@ -407,15 +407,6 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-[#873A3A] to-[#6B2323] overflow-hidden overflow-y-hidden h-screen w-full flex flex-col items-center relative rounded-md font-sans text-black/70">
-      <motion.h1
-        initial={{ y: 0, scale: 1 }}
-        animate={{ y: running ? -30 : 0, scale: running ? 0.7 : 1, opacity: running ? 0.7 : 1 }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-        className="text-5xl font-semibold tracking-[0.5rem] text-white/80 mt-20 z-20 flex-shrink-0"
-      >
-        chiika
-      </motion.h1>
-
       <AnimatePresence mode="wait">
         {!running ? (
           <motion.div
@@ -426,6 +417,9 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="w-full flex h-full flex-col items-center gap-8 mt-20 z-10"
           >
+            <h1 className="text-5xl font-semibold tracking-[0.5rem] text-white/80 z-20 flex-shrink-0 mb-2">
+              chiika
+            </h1>
             <div className="w-full flex flex-col items-center gap-1">
               <label className="text-white/80 text-lg tracking-wide">language</label>
               <input
