@@ -100,7 +100,7 @@ export default function Home() {
   const [status, setStatus] = useState("");
   const [transcript, setTranscript] = useState<{ role: "user" | "model"; text: string }[]>([]);
 
-  const [language, setLanguage] = useState("Any");
+  const [language, setLanguage] = useState("");
   const [canSpeak, setCanSpeak] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -362,7 +362,12 @@ export default function Home() {
 
 
       <div className="w-full flex h-full flex-col items-center gap-3 mt-20">
+      <h1 className="text-5xl font-semibold tracking-[0.5rem] text-white/80">chiika</h1>
 
+        <div className="w-full flex h-full flex-col items-center gap-8 mt-20">
+
+        <div className="w-full flex flex-col items-center gap-1">
+          <label className="text-white/80 text-lg tracking-wide">language</label>
         <input
           type="text"
           id="language-input"
@@ -373,41 +378,48 @@ export default function Home() {
             console.log("LANGUAGE: " + val);
           }}
           disabled={running}
-          className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center"
+          className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center"
           placeholder="Spanish"
         />
+        </div>
 
+
+          <div className="w-full flex flex-col items-center gap-1">
+            <label className="text-white/80 text-lg tracking-wide">scenario</label>
         <input type="text" value={inputScenario} onChange={(e) => {
           const val = e.target.value;
           setInputScenario(val);
           console.log("INPUT SCENARIO: " + val);
         }}
-          className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Ordering a coffee at a cafe"></input>
+          className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Ordering a coffee at a cafe"></input>
+      </div>
+        
 
-
+        <div className="w-full flex flex-col items-center gap-1">
+          <label className="text-white/80 text-lg tracking-wide"> additional instructions (optional)</label>
         <input type="text" value={additionalInstructions} onChange={(e) => {
           const val = e.target.value;
           setAdditionalInstructions(val);
           console.log("INPUT SCENARIO: " + val);
         }}
-          className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Correct my Spanish grammar in English"></input>
-
-        <div
-          className={`w-4 h-4   ${!running ? "bg-gray-400" : canSpeak ? "bg-green-500" : "bg-red-500"
-            }`}
-        ></div>
+          className="bg-[#D9D9D9] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Correct my Spanish grammar in English"></input>
+      </div>
+        
 
 
         <button onClick={running ? stop : start}
-          className="bg-[#f5e4e4] hover:bg-[#f5e4e4]/80 transition-all duration-200 py-1 px-3 rounded-md">{running ? "Stop" : "Start"}</button>
-
+          className="bg-[#D9D9D9] hover:bg-[#A3A3A3] transition-all duration-200 py-1 px-3 rounded-md w-1/4">{running ? "Stop" : "Start"}</button>
+        </div>
       </div>
 
 
 
-      <hr />
+    <hr />
 
-      
+      <div
+          className={`w-4 h-4   ${!running ? "bg-gray-400" : canSpeak ? "bg-green-500" : "bg-red-500"
+            }`}
+        ></div>
       <p>{status}</p>
       
       <div className="text-white">

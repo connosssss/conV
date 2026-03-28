@@ -22,7 +22,8 @@ export async function POST(req: Request) {
             Also determine the closest BCP-47 language code for the language input (e.g., "en-US", "es-ES", "fr-FR").
             Return JSON with two keys: "systemInstruction" (string) and "languageCode" (string).
             
-            Here is a list of extra instructions by the user, keep these a high priority: ${extraInstructions}`
+            Here is a list of extra instructions by the user, keep these a high priority: "${extraInstructions}". 
+            If there is nothing in the quotation marks, then ignore this part`
           }]
         }],
         generationConfig: { responseMimeType: "application/json" }
