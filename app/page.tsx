@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGeminiLive } from "../hooks/useGeminiLive";
+import { jsPDF } from "jspdf";
 
 export default function Home() {
   const [language, setLanguage] = useState("");
@@ -66,6 +67,82 @@ export default function Home() {
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcript]);
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    let yPos = 20;
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const textWidth = pageWidth - margin * 2;
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const addText = (text: string, size: number, isBold: boolean = false, color: number[] = [0, 0, 0]) => {
+      doc.setFontSize(size);
+      if (isBold) {
+        doc.setFont("helvetica", "bold");
+      } else {
+        doc.setFont("helvetica", "normal");
+      }
+      doc.setTextColor(color[0], color[1], color[2]);
+      
+      const lines = doc.splitTextToSize(text, textWidth);
+      for (let i = 0; i < lines.length; i++) {
+        if (yPos > pageHeight - margin) {
+          doc.addPage();
+          yPos = margin + 10;
+        }
+        doc.text(lines[i], margin, yPos);
+        yPos += size * 0.4;
+      }
+      yPos += size * 0.2;
+    };
+
+    addText("Conversation Report", 24, true, [107, 35, 35]);
+    yPos += 5;
+
+    if (summaryData) {
+      if (summaryData.score) {
+        addText(`Score: ${summaryData.score}`, 18, true, [135, 58, 58]);
+        yPos += 5;
+      }
+      if (summaryData.report) {
+        addText(summaryData.report, 12);
+        yPos += 5;
+      }
+      
+      if (summaryData.doneWell && summaryData.doneWell.length > 0) {
+        addText("Done Well:", 14, true, [46, 138, 72]);
+        summaryData.doneWell.forEach(item => {
+          addText(`• ${item}`, 12);
+        });
+        yPos += 5;
+      }
+
+      if (summaryData.workOn && summaryData.workOn.length > 0) {
+        addText("Things to work on:", 14, true, [138, 36, 36]);
+        summaryData.workOn.forEach(item => {
+          addText(`• ${item}`, 12);
+        });
+        yPos += 5;
+      }
+    }
+
+    yPos += 10;
+    addText("Transcript", 20, true);
+    yPos += 5;
+
+    transcript.forEach(entry => {
+      const isUser = entry.role === "user";
+      const roleLabel = isUser ? "You" : "AI";
+      const color = isUser ? [80, 80, 80] : [0, 0, 0];
+      
+      addText(`${roleLabel}:`, 12, true, color);
+      addText(entry.text, 12, false, color);
+      yPos += 2;
+    });
+
+    doc.save("Chiika_Conversation_Report.pdf");
+  };
 
   return (
     <div className="bg-gradient-to-b from-[#873A3A] to-[#6B2323] overflow-hidden overflow-y-hidden h-screen w-full flex flex-col items-center relative rounded-md font-sans text-black/70">
@@ -189,7 +266,7 @@ export default function Home() {
                   >
                     <div className="w-full p-6 rounded-3xl backdrop-blur-md shadow-lg bg-[#D9D9D9]/90 text-black border border-white/20 flex flex-col items-center gap-4">
                       {isLoadingSummary ? (
-                        <p className="text-lg font-medium animate-pulse text-center">Generating conversation summary...</p>
+                        <p className="text-lg font-medium text-center">Generating conversation summary...</p>
                       ) : (
                         <>
                           <h2 className="text-xl font-semibold tracking-wide text-[#6B2323]">conversation report</h2>
@@ -229,17 +306,24 @@ export default function Home() {
                           )}
 
 
+                          {/*bg-[#6B2323]/65 hover:bg-[#873A3A]/65 */}
 
-
-                          <button
-                            onClick={() => {
-                                setShowSummary(false);
-                            }}
-                            className="mt-4 px-8 py-3 bg-[#6B2323] text-white rounded-md shadow-md hover:bg-[#873A3A] transition font-bold tracking-wider"
-                          >
-                            Return to Menu
-
-                          </button>
+                          <div className="flex flex-col gap-3 mt-4 w-1/3">
+                            <button
+                              onClick={handleExportPDF}
+                              className="px-3 py-2 bg-black/35 hover:bg-black/25 text-white rounded-md shadow-md  transition font-bold tracking-wider"
+                            >
+                              Export as PDF
+                            </button>
+                            <button
+                              onClick={() => {
+                                  setShowSummary(false);
+                              }}
+                              className="px-3 py-2 bg-[#6B2323] text-white rounded-md shadow-md hover:bg-[#873A3A] transition font-semibold tracking-wider"
+                            >
+                              Return to Menu
+                            </button>
+                          </div>
                         </>
                       )}
                     </div>

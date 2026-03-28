@@ -30,7 +30,8 @@ export async function POST(req: Request) {
             force yourself to put anything in the things to work on category and vice versa for a very low score and things done well. 
 
             Return JSON with exactly four keys: "report" (string), "score" (a string, like "85/100"), "workOn" (an array of strings), "doneWell" (an array of strings).
-            Lastly, do not deduct points if the user doesnt respond to the last message the ai sends and do not consider how much it follows the scenario either.
+            Lastly, do not deduct points if the user doesnt respond to the last message the ai sends and do not consider how much it follows the scenario either, this includes
+            anything that has to do with answering all pending questions.
             
             Conversation Transcript:
             ${transcriptText}`
