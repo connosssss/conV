@@ -7,7 +7,7 @@ export async function POST(req: Request) {
 
   if (!apiKey) return NextResponse.json({ error: "No API key" }, { status: 500 });
 
-  const { language, scenario } = await req.json();
+  const { language, scenario, extraInstructions } = await req.json();
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`,
@@ -18,9 +18,11 @@ export async function POST(req: Request) {
         contents: [{
           parts: [{
             text: `Based on the language input "${language}" and the scenario "${scenario}", create a detailed system instruction for an assistant to roleplay in the scenario. 
-            The AI must fully embody a character in this scenario and communicate in the specified language. 
+            The AI must fully embody a character in this scenario and communicate in the specified language unless asked by the user to switch or specified in the extra instructions. 
             Also determine the closest BCP-47 language code for the language input (e.g., "en-US", "es-ES", "fr-FR").
-            Return JSON with two keys: "systemInstruction" (string) and "languageCode" (string).`
+            Return JSON with two keys: "systemInstruction" (string) and "languageCode" (string).
+            
+            Here is a list of extra instructions by the user, keep these a high priority: ${extraInstructions}`
           }]
         }],
         generationConfig: { responseMimeType: "application/json" }

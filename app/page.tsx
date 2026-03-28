@@ -108,13 +108,14 @@ export default function Home() {
   const playbackNodeRef = useRef<AudioWorkletNode | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  
+
   const canSpeakRef = useRef(false);
   const playbackTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 
   const [inputScenario, setInputScenario] = useState("");
-  
+  const [additionalInstructions, setAdditionalInstructions] = useState("");
+
 
 
   const appendTranscript = useCallback((role: "user" | "model", text: string) => {
@@ -210,7 +211,7 @@ export default function Home() {
       const gRes = await fetch("/api/generate-instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language, scenario: inputScenario }),
+        body: JSON.stringify({ language, scenario: inputScenario, extraInstructions: additionalInstructions }),
       });
 
       
@@ -225,6 +226,7 @@ export default function Home() {
     
     catch (err) {
       console.error("Error generating system instruction:", err);
+      setStatus("Error generating instructions. Using defaults.");
     }
 
     const audioCtx = new AudioContext({ sampleRate: 24000 });
@@ -244,15 +246,15 @@ export default function Home() {
         if (playbackTimerRef.current) clearTimeout(playbackTimerRef.current);
         canSpeakRef.current = false;
         setCanSpeak(false);
-        
-      } 
-      
+
+      }
+
       else {
         playbackTimerRef.current = setTimeout(() => {
           canSpeakRef.current = true;
           setCanSpeak(true);
 
-        }, 500); 
+        }, 500);
       }
     };
 
@@ -334,7 +336,7 @@ export default function Home() {
     setRunning(true);
 
 
-  }, [playAudioChunk, startMic, appendTranscript, language, inputScenario]);
+  }, [playAudioChunk, startMic, appendTranscript, language, inputScenario, additionalInstructions]);
 
   const stop = useCallback(() => {
     wsRef.current?.close();
@@ -372,7 +374,7 @@ export default function Home() {
           }}
           disabled={running}
           className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center"
-          placeholder="Language (e.g. English)"
+          placeholder="Spanish"
         />
 
         <input type="text" value={inputScenario} onChange={(e) => {
@@ -380,23 +382,30 @@ export default function Home() {
           setInputScenario(val);
           console.log("INPUT SCENARIO: " + val);
         }}
-        className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Imagine you're in a coffee shop..."></input>
-        
-        <div 
-          className={`w-4 h-4   ${
-            !running ? "bg-gray-400" : canSpeak ? "bg-green-500" : "bg-red-500"
-          }`}
+          className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Ordering a coffee at a cafe"></input>
+
+
+        <input type="text" value={additionalInstructions} onChange={(e) => {
+          const val = e.target.value;
+          setAdditionalInstructions(val);
+          console.log("INPUT SCENARIO: " + val);
+        }}
+          className="bg-[#f5e4e4] w-3/8 h-8 rounded-md px-3 text-center " placeholder="Correct my Spanish grammar in English"></input>
+
+        <div
+          className={`w-4 h-4   ${!running ? "bg-gray-400" : canSpeak ? "bg-green-500" : "bg-red-500"
+            }`}
         ></div>
 
 
         <button onClick={running ? stop : start}
-        className="bg-[#f5e4e4] hover:bg-[#f5e4e4]/80 transition-all duration-200 py-1 px-3 rounded-md">{running ? "Stop" : "Start"}</button>
+          className="bg-[#f5e4e4] hover:bg-[#f5e4e4]/80 transition-all duration-200 py-1 px-3 rounded-md">{running ? "Stop" : "Start"}</button>
 
       </div>
 
 
 
-    <hr />
+      <hr />
 
       
       <p>{status}</p>
