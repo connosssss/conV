@@ -88,6 +88,8 @@ export default function Home() {
   const [status, setStatus] = useState("");
   const [transcript, setTranscript] = useState<{ role: "user" | "model"; text: string }[]>([]);
 
+  const [language, setLanguage] = useState("Any");
+
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const playbackNodeRef = useRef<AudioWorkletNode | null>(null);
@@ -191,11 +193,30 @@ export default function Home() {
     // WEBSOCKETS
     ws.onopen = () => {
       setStatus("Connected. Sending config...");
+
+      const langNames: Record<string, string> = {
+        "Any": "Any", 
+        "en-US": "English",
+        "es-ES": "Spanish",
+        "zh-CN": "Chinese"
+      };
+
       ws.send(
         JSON.stringify({
           setup: {
             model: `models/${MODEL}`,
-            generationConfig: { responseModalities: ["AUDIO"] },
+
+            systemInstruction: {
+              parts: [{ text: `The user input will be in ${langNames[language]}, try to respond in that as well (if it says Any, then ignore this part).` }]
+            },
+
+            generationConfig: { 
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                languageCode: language
+              }
+            },
+
             outputAudioTranscription: {},
             inputAudioTranscription: {},
           },
@@ -235,7 +256,7 @@ export default function Home() {
     setRunning(true);
 
 
-  }, [playAudioChunk, startMic, appendTranscript]);
+  }, [playAudioChunk, startMic, appendTranscript, language]);
 
   const stop = useCallback(() => {
     wsRef.current?.close();
@@ -254,6 +275,24 @@ export default function Home() {
 
   return (
     <div>
+      <div>
+
+        <select 
+          id="language-select" 
+          value={language} 
+          onChange={(e) => setLanguage(e.target.value)}
+          disabled={running}
+        >
+
+          <option value="Any">Any</option>
+          <option value="en-US">English</option>
+          <option value="es-ES">Spanish</option>
+          <option value="zh-CN">Chinese</option>
+
+        </select>
+
+      </div>
+
       <button onClick={running ? stop : start}>{running ? "Stop" : "Start"}</button>
       <p>{status}</p>
       <hr />
