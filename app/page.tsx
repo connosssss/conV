@@ -131,6 +131,7 @@ export default function Home() {
 
   const [language, setLanguage] = useState("");
   const [canSpeak, setCanSpeak] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -444,7 +445,22 @@ export default function Home() {
             </div>
 
             <div className="w-full flex flex-col items-center gap-1">
-              <label className="text-white/80 text-lg tracking-wide"> additional instructions (optional)</label>
+
+              <div className="flex items-center gap-2">
+                <label className="text-white/80 text-lg tracking-wide"> additional instructions (optional)</label>
+                <button
+                  onClick={() => setShowInfoPopup(true)}
+                  className="text-white/80 hover:text-white transition-colors cursor-pointer"
+                  aria-label="More information"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </button>
+
+              </div>
               <input
                 type="text"
                 value={additionalInstructions}
@@ -541,6 +557,44 @@ export default function Home() {
             transition={{ duration: 1.5 }}
             className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_80%)] pointer-events-none z-0"
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInfoPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setShowInfoPopup(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ delay: 0.1, duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#D9D9D9] p-6 rounded-lg max-w-sm w-full shadow-2xl relative cursor-default"
+            >
+              <button
+                onClick={() => setShowInfoPopup(false)}
+                className="absolute top-3 right-3 text-black/50 hover:text-black transition-colors"
+                aria-label="Close popup"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <h3 className="text-xl font-semibold mb-3 text-black/80 tracking-wide text-center">Additional Instructions</h3>
+              <p className="text-black/70 leading-relaxed text-sm text-center">
+                Here you can add anything that you want to be in the conversation. For example you can do things like ask it to give you a rating when you request it,
+                fix your grammar when you mess up, or give translations after each statement; there is really no limit, so don't be afraid to specify anything!
+              </p>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
