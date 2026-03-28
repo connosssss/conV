@@ -281,8 +281,17 @@ export default function Home() {
 
       if (msg.setupComplete) {
         setStatus("starting mic");
-        canSpeakRef.current = true;
-        setCanSpeak(true);
+        canSpeakRef.current = false;
+        setCanSpeak(false);
+
+        ws.send(
+          JSON.stringify({
+           realtimeInput: {
+            text: "Please begin the scenario.",
+          },
+        })
+        );
+
         startMic(ws);
         return;
       }
