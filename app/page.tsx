@@ -2,10 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 
-// ─── Audio Worklet Processor Code ────────────────────────────────────────────
-// These strings are loaded as AudioWorklet modules via Blob URLs at runtime.
 
-/** Captures raw PCM samples from the microphone and posts them to the main thread. */
 const PCM_PROCESSOR_CODE = `
 class PCMProcessor extends AudioWorkletProcessor {
   process(inputs) {
@@ -19,12 +16,12 @@ class PCMProcessor extends AudioWorkletProcessor {
 registerProcessor("pcm-processor", PCMProcessor);
 `;
 
-/** Receives Float32 PCM samples from the main thread and plays them back in order. */
 const PLAYBACK_PROCESSOR_CODE = `
 class PlaybackProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this._buffer = [];
+    this._isPlaying = false;
     this.port.onmessage = (e) => {
       const samples = e.data;
       for (let i = 0; i < samples.length; i++) {
@@ -38,6 +35,17 @@ class PlaybackProcessor extends AudioWorkletProcessor {
     for (let i = 0; i < output.length; i++) {
       output[i] = this._buffer.length > 0 ? this._buffer.shift() : 0;
     }
+    
+    if (this._buffer.length > 0 && !this._isPlaying) {
+      this._isPlaying = true;
+      this.port.postMessage({ playing: true });
+    } 
+      
+    else if (this._buffer.length === 0 && this._isPlaying) {
+      this._isPlaying = false;
+      this.port.postMessage({ playing: false });
+    }
+    
     return true;
   }
 }
@@ -89,12 +97,16 @@ export default function Home() {
   const [transcript, setTranscript] = useState<{ role: "user" | "model"; text: string }[]>([]);
 
   const [language, setLanguage] = useState("Any");
+  const [canSpeak, setCanSpeak] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const playbackNodeRef = useRef<AudioWorkletNode | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  
+  const canSpeakRef = useRef(false);
+  const playbackTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const appendTranscript = useCallback((role: "user" | "model", text: string) => {
 
@@ -138,6 +150,9 @@ export default function Home() {
 
       workletNode.port.onmessage = (e) => {
         if (ws.readyState !== WebSocket.OPEN) return;
+
+        if (!canSpeakRef.current) return;
+
         ws.send(
           JSON.stringify({
             realtimeInput: {
@@ -182,6 +197,27 @@ export default function Home() {
     const playbackNode = new AudioWorkletNode(audioCtx, "playback-processor");
     playbackNode.connect(audioCtx.destination);
     playbackNodeRef.current = playbackNode;
+
+    playbackNode.port.onmessage = (e) => {
+      const { playing } = e.data;
+      console.log("Playbacknodethingy")
+
+      if (playing) {
+        if (playbackTimerRef.current) clearTimeout(playbackTimerRef.current);
+        canSpeakRef.current = false;
+        setCanSpeak(false);
+        
+      } 
+      
+      else {
+        playbackTimerRef.current = setTimeout(() => {
+          canSpeakRef.current = true;
+          setCanSpeak(true);
+
+        }, 500); 
+      }
+    };
+
     setStatus("connecting to live");
 
 
@@ -231,7 +267,9 @@ export default function Home() {
       const msg = JSON.parse(text);
 
       if (msg.setupComplete) {
-        setStatus("Setup complete. Starting mic...");
+        setStatus("starting mic");
+        canSpeakRef.current = true;
+        setCanSpeak(true);
         startMic(ws);
         return;
       }
@@ -268,6 +306,10 @@ export default function Home() {
     audioContextRef.current?.close();
     audioContextRef.current = null;
 
+    if (playbackTimerRef.current) clearTimeout(playbackTimerRef.current);
+    canSpeakRef.current = false;
+    setCanSpeak(false);
+
     setRunning(false);
     setStatus("stopped");
   }, []);
@@ -290,6 +332,12 @@ export default function Home() {
           <option value="zh-CN">Chinese</option>
 
         </select>
+        
+        <div 
+          className={`w-4 h-4   ${
+            !running ? "bg-gray-400" : canSpeak ? "bg-green-500" : "bg-red-500"
+          }`}
+        ></div>
 
       </div>
 
